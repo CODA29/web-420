@@ -9,6 +9,9 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const createError = require('http-errors');
 
+// Importing the recipes module
+const recipes = require('../database/recipes');
+
 const app = express(); // Creates an express application
 
 app.use(express.json()); // Middleware to parse JSON request bodies
@@ -65,6 +68,51 @@ app.get("/", async(req,res,next) => {
     </html> `; // end HTML content for the landing page
   res.send(html); // Send the HTML content to the client
 });
+
+// Route to get all recipes
+app.get("/api/recipes", async(req, res, next) => {
+  try{
+    const allRecipes = await recipes.find();
+    console.log("All Recipes: ", allRecipes);
+    res.send(allRecipes); // Sends response with all recipes
+  }catch(err){
+    console.error("Error: ", err.message);// Logs error message
+    next(err); // Passes error to the next middleware
+  }
+});
+
+// Route to get a single recipe by ID
+app.get("/api/recipes/:id", async(req,res,next) => {
+  try{
+    const recipe = await recipes.findOne({id: Number(req.params.id)});
+    console.log("Recipe: ", recipe);
+    res.send(recipe); // Sends response with the recipe
+  }catch(err){
+    console.error("Error:", err.message);
+    next(err); // Passes error to the next middleware
+  }
+})
+
+// Validation middleware to check if req.params.id is a numerical value
+app.get("/api/recipes/:id", async(req, res, next) => {
+  try{
+    let { id } = req.params;
+    id = parseInt(id);
+
+    if(isNaN(id)){
+      // If id is not a number, throw a 400 error;
+      return next(createError(400, "Input must be a number"));
+    }
+
+    const recipe = await recipes.findOne({ id: id });
+
+    console.log("Recipe: ", recipe);
+    res.send(recipe);
+  }catch(err){
+    console.error("Error:", err.message);
+    next(err);
+  }
+})
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

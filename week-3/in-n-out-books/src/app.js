@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 06/11/2025
+  Date: 06/20/2025
   File Name: app.js
   Description: This is the main entry point for the in-n-out-books application.
 */
@@ -9,6 +9,13 @@
 const express = require('express');
 const app = express();
 const createError = require('http-errors');
+
+// Importing the books collection
+const books = require('../database/books');
+
+app.use(express.json()); // Middleware to parse JSON request bodies
+app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded request bodies
+
 
 // Add a GET route for the root URL
 app.get("/", async (req, res, next) => {
@@ -90,6 +97,46 @@ app.get("/", async (req, res, next) => {
 
   res.send(html);
 });
+
+// Route to get all books
+app.get("/api/books", async(req, res, next) => {
+  try{
+    const allBooks = await books.find();
+    console.log("All Books: ", allBooks);
+    res.send(allBooks); // Sends response with all recipes
+  }catch(err){
+    console.error("Error: ", err.message);// Logs error message
+    next(err); // Passes error to the next middleware
+  }
+});
+
+//Error handler to check if the id is not a number and throwing a 400 error if it is not with an error message
+app.get("/api/books/:id", async (req, res, next) => {
+  try {
+    let { id } = req.params;
+    id = parseInt(id);
+
+    // Check if the id is not a number
+    if (isNaN(id)) {
+      return next(createError(400, "Input must be a number"));
+    }
+
+    // Find a single book with the matching id
+    const book = await books.findOne({ id: id });
+    console.log("Book: ", book);
+
+    if (!book) {
+      return next(createError(404, "Book not found"));
+    }
+
+    // Return the found book
+    res.send(book);
+  } catch (err) {
+    console.error("Error:", err.message);
+    next(err);
+  }
+});
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
