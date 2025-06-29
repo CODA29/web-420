@@ -1,8 +1,15 @@
+/*
+  Author: Dagmawi Megra
+  Date: 06/29/2025
+  File Name: app.spec.js
+  Description: This file contains tests for the In-N-Out Books API using Jest and Supertest.
+*/
+
 //require statements for the app.js file and supertest
 const app = require("../src/app");
 const request = require("supertest");
 
-// test suite using Jest’s describe method
+// test suite for chapter 3 using Jest’s describe method
 describe("Chapter 3: API Tests", () => {
   it("it should return an array of books", async () => {
     const res = await request(app).get("/api/books");
@@ -30,4 +37,30 @@ describe("Chapter 3: API Tests", () => {
     expect(res.statusCode).toEqual(400); // Check if the status code is 400
     expect(res.body.message).toEqual("Input must be a number");
   });
+});
+
+// test suite for chapter 4 using Jest’s describe method
+describe("Chapter 4: API Tests", () => {
+  it("should return a 201 status code when adding a new book", async () => {
+    const res = await request(app).post("/api/books").send({
+      id: 6,
+      title: "The Hobbit",
+      author: "J.R.R. Tolkien"
+    });
+    expect(res.statusCode).toEqual(201); // Check if the status code is 201
+  });
+
+  it("should return a 400 status code when adding a new book with missing title", async () => {
+    const res = await request(app).post("/api/books").send({
+      id: 7,
+      author: "J.K. Rowling"
+    });
+    expect(res.statusCode).toEqual(400); // Check if the status code is 400
+    expect(res.body.message).toEqual("Bad Request"); // Check if the error message is "Bad Request"
+  });
+
+  it("should return a 204 status code when deleting a book", async () => {
+    const res = await request(app).delete("/api/books/6");
+    expect(res.statusCode).toEqual(204); // Check if the status code is 204
+  })
 });

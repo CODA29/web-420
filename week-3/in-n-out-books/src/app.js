@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 06/20/2025
+  Date: 06/29/2025
   File Name: app.js
   Description: This is the main entry point for the in-n-out-books application.
 */
@@ -97,6 +97,46 @@ app.get("/", async (req, res, next) => {
 
   res.send(html);
 });
+
+// Route to add a new book
+app.post("/api/books", async(req, res, next) => {
+  try{
+    const newBook = req.body;
+
+    const receivedKeys = Object.keys(newBook);
+    const expectedKeys = ["id", "title", "author"]; // Expected keys for a book object
+
+    if(!receivedKeys.every(key => expectedKeys.includes(key)) || receivedKeys.length !== expectedKeys.length){
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      return next(createError(400, "Bad Request")); // Returns a 400 error if the request body does not match the expected structure
+    }
+
+    const result = await books.insertOne(newBook); // Inserts the new book into the collection
+    console.log("Result: ", result);
+    res.status(201).send({id: result.ops[0].id}); // Sends a response with the id of the newly created book
+  }catch(err){
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+// Route to delete a book by id
+app.delete("/api/books/:id", async(req, res, next) => {
+  try{
+    const { id } = req.params; // Extracts the id from the request parameters
+    const result = await books.deleteOne({id: parseInt(id)}); // Deletes the book with the matching id from the collection
+    console.log("Result: ", result);
+
+    res.status(204).send(); // Sends a 204 status code if deletion is successful
+  }catch(err){
+    if(err.message === "No matching item found"){
+      return next(createError(404, "Book not found")); // Returns a 404 error if the book is not found
+    }
+
+    console.error("Error: ", err.message);
+    next(err); // Passes the error to the next middleware
+  }
+})
 
 // Route to get all books
 app.get("/api/books", async(req, res, next) => {

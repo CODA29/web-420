@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 06/15/2025
+  Date: 06/29/2025
   File Name: app.js
   Description: This is the main entry point for the cookbook application.
 */
@@ -69,6 +69,47 @@ app.get("/", async(req,res,next) => {
   res.send(html); // Send the HTML content to the client
 });
 
+// Route to add a new recipe
+app.post("/api/recipes", async(req, res, next)=>{
+  try{
+    const newRecipe = req.body;
+
+    const expectedKeys = ["id", "name", "ingredients"];
+    const receivedKeys = Object.keys(newRecipe);
+
+    if(!receivedKeys.every(key => expectedKeys.includes(key)) || receivedKeys.length !== expectedKeys.length){
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      return next(createError(400, "Bad Request"));
+    }
+
+    const result = await recipes.insertOne(newRecipe);
+    console.log("Result: ", result);
+    res.status(201).send({id: result.ops[0].id});
+
+  }catch(err){
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+// Route to delete a recipe by id
+app.delete("/api/recipes/:id", async(req, res, next) => {
+  try{
+    const { id } = req.params;
+    const result = await recipes.deleteOne({id: parseInt(id)});
+    console.log("Result: ", result);
+    res.status(204).send(); // Sends a 204 if deletion is successful
+  }catch(err){
+    if(err.message === "No matching item found"){
+      return next(createError(404, "Recipe not found"));
+    }
+
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+
 // Route to get all recipes
 app.get("/api/recipes", async(req, res, next) => {
   try{
@@ -81,38 +122,32 @@ app.get("/api/recipes", async(req, res, next) => {
   }
 });
 
-// Route to get a single recipe by ID
-app.get("/api/recipes/:id", async(req,res,next) => {
-  try{
-    const recipe = await recipes.findOne({id: Number(req.params.id)});
-    console.log("Recipe: ", recipe);
-    res.send(recipe); // Sends response with the recipe
-  }catch(err){
-    console.error("Error:", err.message);
-    next(err); // Passes error to the next middleware
-  }
-})
-
-// Validation middleware to check if req.params.id is a numerical value
-app.get("/api/recipes/:id", async(req, res, next) => {
-  try{
+//Error handler to check if the id is not a number and throwing a 400 error if it is not with an error message
+app.get("/api/recipes/:id", async (req, res, next) => {
+  try {
     let { id } = req.params;
     id = parseInt(id);
 
-    if(isNaN(id)){
-      // If id is not a number, throw a 400 error;
+    // Check if the id is not a number
+    if (isNaN(id)) {
       return next(createError(400, "Input must be a number"));
     }
 
+    // Find a single book with the matching id
     const recipe = await recipes.findOne({ id: id });
+    console.log("Book: ", recipe);
 
-    console.log("Recipe: ", recipe);
+    if (!recipe) {
+      return next(createError(404, "Book not found"));
+    }
+
+    // Return the found book
     res.send(recipe);
-  }catch(err){
+  } catch (err) {
     console.error("Error:", err.message);
     next(err);
   }
-})
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

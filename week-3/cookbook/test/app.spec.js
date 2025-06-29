@@ -1,9 +1,16 @@
+/*
+  Author: Dagmawi Megra
+  Date: 06/29/2025
+  File Name: app.spec.js
+  Description: This file contains tests for the cookbook API using Jest and Supertest.
+*/
+
 //require statements for the app.js file and supertest
 const app = require("../src/app");
 const request = require("supertest");
 
 
-// test suite using Jest’s describe method
+// test suite for chapter 3 using Jest’s describe method
 describe("Chapter 3: API Tests", () => {
   it("it should return an array of recipes", async () => {
     const res = await request(app).get("/api/recipes");
@@ -33,3 +40,30 @@ describe("Chapter 3: API Tests", () => {
   });
 });
 
+// test suite for chapter 4 using Jest’s describe method
+describe("Chapter 4: API Tests", () => {
+  it("should return a 201 status code when adding a new recipe", async() => {
+    const res = await request(app).post("/api/recipes").send({
+      id: 99,
+      name: "Grilled Cheese",
+      ingredients: ["bread", "cheese", "butter"]
+    });
+
+    expect(res.statusCode).toEqual(201); // Check if the status code is 201
+  });
+
+  it("should return a 400 status code when adding a new recipe with missing name", async() =>{
+    const res = await request(app).post("/api/recipes").send({
+      id: 100,
+      ingredients: ["bread", "cheese", "butter"]
+    });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual("Bad Request");
+  });
+
+  it("should return a 204 status code when deleting a recipe", async() => {
+    const res = await request(app).delete("/api/recipes/99");
+    expect(res.statusCode).toEqual(204); // Check if the status code is 204
+  });
+});
