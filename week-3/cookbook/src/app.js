@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 06/29/2025
+  Date: 07/05/2025
   File Name: app.js
   Description: This is the main entry point for the cookbook application.
 */
@@ -92,6 +92,43 @@ app.post("/api/recipes", async(req, res, next)=>{
   }
 });
 
+
+// Route to update a recipe by id
+app.put("/api/recipes/:id", async(req, res, next) => {
+  try{
+    let {id} = req.params;
+    let recipe = req.body;
+    id = parseInt(id);
+
+
+    if(isNaN(id)){
+      return next(createError(400, "Input must be a number"));
+    }
+
+
+    const expectedKeys = ["name", "ingredients"];
+    const receivedKeys = Object.keys(recipe);
+
+    if(!receivedKeys.every(key => expectedKeys.includes(key)) || receivedKeys.length !== expectedKeys.length){
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      return next(createError(400, "Bad Request"));
+    }
+
+    const result = await recipes.updateOne({ id: id }, recipe);
+    console.log("Result: ", result);
+    res.status(204).send(); // Sends a 204 if update is successful
+
+  }catch(err){
+    if(err.message === "No matching item found"){
+      console.log("Recipe not found", err.message);
+      return next(createError(404, "Recipe not found"));
+    }
+
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
 // Route to delete a recipe by id
 app.delete("/api/recipes/:id", async(req, res, next) => {
   try{
@@ -108,6 +145,7 @@ app.delete("/api/recipes/:id", async(req, res, next) => {
     next(err);
   }
 });
+
 
 
 // Route to get all recipes

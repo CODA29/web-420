@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 06/29/2025
+  Date: 07/05/2025
   File Name: app.spec.js
   Description: This file contains tests for the cookbook API using Jest and Supertest.
 */
@@ -66,4 +66,43 @@ describe("Chapter 4: API Tests", () => {
     const res = await request(app).delete("/api/recipes/99");
     expect(res.statusCode).toEqual(204); // Check if the status code is 204
   });
+});
+
+// test suite for chapter 5 using Jest’s describe method
+describe("Chapter 5: API Tests", () => {
+  it("should return a 204 status code when updating a recipe", async() => {
+    const res = await request(app).put("/api/recipes/1").send({
+      name: "Pancakes",
+      ingredients: ["flour", "milk", "eggs", "sugar"]
+    });
+
+    expect(res.statusCode).toEqual(204); // Check if the status code is 204
+  });
+
+  it("should return a 400 status code when updating a recipe with a non-numeric id", async() => {
+    const res = await request(app).put("/api/recipes/foo").send({
+      name: "Test Recipe",
+      ingredients: ["test", "test"]
+    });
+
+    expect(res.statusCode).toEqual(400); // Check if the status code is 400
+    expect(res.body.message).toEqual("Input must be a number");
+  });
+
+  it("should return a 400 status code when updating a recipe with missing keys or extra keys", async () => {
+    const res = await request(app).put("/api/recipes/1").send({
+      name: "Test Recipe"
+    });
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual("Bad Request");
+
+    const res2 = await request(app).put("/api/recipes/1").send({
+      name: "Test Recipe",
+      ingredients: ["test", "test"],
+      extraKey: "extra"
+    });
+    expect(res2.statusCode).toEqual(400);
+    expect(res2.body.message).toEqual("Bad Request");
+  });
+
 });

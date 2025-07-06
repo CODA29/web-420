@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 06/29/2025
+  Date: 07/05/2025
   File Name: app.js
   Description: This is the main entry point for the in-n-out-books application.
 */
@@ -117,6 +117,43 @@ app.post("/api/books", async(req, res, next) => {
   }catch(err){
     console.error("Error: ", err.message);
     next(err);
+  }
+});
+
+// Route to update a book by id
+app.put("/api/books/:id", async(req, res, next) => {
+  try{
+    let { id } = req.params;
+    let book = req.body;
+    id = parseInt(id);
+
+    // Check if the id is not a number
+    if(isNaN(id)){
+      return next(createError(400, "Input must be a number")); // Returns a 400 error if the id is not a number
+    }
+
+    // Check if the book object has the expected keys
+    const expectedKeys = ["title", "author"]; // Expected keys for a book object
+    const receivedKeys = Object.keys(book); // Gets the keys from the request body
+
+    // Validates that the received keys match the expected keys
+    if(!receivedKeys.every(key => expectedKeys.includes(key)) || receivedKeys.length !== expectedKeys.length){
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      return next(createError(400, "Bad Request"));
+    }
+    // Updates the book with the matching id in the collection
+    const result = await books.updateOne({ id: id }, book);
+    console.log("Result: ", result);
+
+    res.status(204).send(); // Sends a 204 status code if the update is successful
+
+  }catch(err){
+    if(err.message === "No matching item found"){
+      return next(createError(404, "Book not found")); // Returns a 404 error if the book is not found
+    }
+
+    console.error("Error: ", err.message);
+    next(err); // Passes the error to the next middleware
   }
 });
 

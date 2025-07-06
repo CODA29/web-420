@@ -1,11 +1,12 @@
 /*
   Author: Dagmawi Megra
-  Date: 06/29/2025
+  Date: 07/05/2025
   File Name: app.spec.js
   Description: This file contains tests for the In-N-Out Books API using Jest and Supertest.
 */
 
 //require statements for the app.js file and supertest
+const e = require("express");
 const app = require("../src/app");
 const request = require("supertest");
 
@@ -63,4 +64,35 @@ describe("Chapter 4: API Tests", () => {
     const res = await request(app).delete("/api/books/6");
     expect(res.statusCode).toEqual(204); // Check if the status code is 204
   })
+});
+
+describe("Chapter 5: API Tests", () => {
+  it("should update a book and return a 204-status code", async () => {
+    const res = await request(app).put("/api/books/1").send({
+      title: "The Fellowship of the Ring - Updated",
+      author: "J.R.R. Tolkien - Updated",
+    });
+
+    expect(res.statusCode).toEqual(204); // Check if the status code is 204
+  });
+
+  it("should return a 400 status code when using a non-numeric id", async () => {
+    const res = await request(app).put("/api/books/foo").send({
+      title: "Test Book",
+      author: "Test Author"
+    });
+    expect(res.statusCode).toEqual(400); // Check if the status code is 400
+    expect(res.body.message).toEqual("Input must be a number");
+
+  });
+
+  it("should return a 400-status code when updating a book with a missing title", async () => {
+    const res = await request(app).put("/api/books/1").send({
+      author: "J.R.R. Tolkien"
+    });
+
+    expect(res.statusCode).toEqual(400); // Check if the status code is 400
+    expect(res.body.message).toEqual("Bad Request");
+  });
+
 });
