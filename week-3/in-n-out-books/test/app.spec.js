@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 07/05/2025
+  Date: 07/13/2025
   File Name: app.spec.js
   Description: This file contains tests for the In-N-Out Books API using Jest and Supertest.
 */
@@ -66,6 +66,7 @@ describe("Chapter 4: API Tests", () => {
   })
 });
 
+// test suite for chapter 5 using Jest’s describe method
 describe("Chapter 5: API Tests", () => {
   it("should update a book and return a 204-status code", async () => {
     const res = await request(app).put("/api/books/1").send({
@@ -95,4 +96,35 @@ describe("Chapter 5: API Tests", () => {
     expect(res.body.message).toEqual("Bad Request");
   });
 
+});
+
+// test suite for chapter 6 using Jest’s describe method
+describe("Chapter 6: API Tests", () => {
+  it("should log a user in and return a 200-status code with 'Authentication successful'", async () => {
+    const res = await request(app).post("/api/users/login").send({
+      email: "hermione@hogwarts.edu",
+      password: "granger"
+    });
+    expect(res.statusCode).toEqual(200); // Check if the status code is 200
+    expect(res.body.message).toEqual("Authentication successful");
+  });
+
+  it("should return a 401 status code with 'Unauthorized' message when logging in with incorrect credentials", async() => {
+    const res = await request(app).post("/api/users/login").send({
+      email: "hermione@hogwarts.edu",
+      password: "wrongpassword"
+    });
+
+    expect(res.statusCode).toEqual(401); // Check if the status code is 401
+    expect(res.body.message).toEqual("Unauthorized"); // Check if the error message is "Unauthorized"
+  });
+
+  it("should return a 400 status code with 'Bad Request' message when missing email or password", async() => {
+    const res = await request(app).post("/api/users/login").send({
+      email: "hermione@hogwarts.edu",
+    });
+
+    expect(res.statusCode).toEqual(400); // Check if the status code is 400
+    expect(res.body.message).toEqual("Bad Request"); // Check if the error message is "Bad Request"
+  });
 });

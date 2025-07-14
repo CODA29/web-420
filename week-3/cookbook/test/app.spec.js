@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 07/05/2025
+  Date: 07/13/2025
   File Name: app.spec.js
   Description: This file contains tests for the cookbook API using Jest and Supertest.
 */
@@ -105,4 +105,45 @@ describe("Chapter 5: API Tests", () => {
     expect(res2.body.message).toEqual("Bad Request");
   });
 
+});
+
+// test suite for chapter 6 using Jest’s describe method
+describe("Chapter 6: API Tests", () => {
+  it("should return a 200 status code with a message of 'Registration successful' when registering a new user", async() => {
+    const res  = await request(app).post("/api/register").send({
+      email: "cedric@hogwarts.edu",
+      password: "diggory"
+    });
+
+    expect(res.statusCode).toEqual(200); // Check if the status code is 200
+    expect(res.body.message).toEqual("Registration successful");
+  });
+
+  it("should return a 409 status code with a message of 'Conflict' when registering a user with a duplicate email", async() => {
+    const res = await request(app).post("/api/register").send({
+      email: "harry@hogwarts.edu",
+      password: "potter"
+    });
+
+    expect(res.statusCode).toEqual(409); // Check if the status code is 409
+    expect(res.body.message).toEqual("Conflict");
+  });
+
+  it("should return a 400 status code when registering a new user with too many or too few parameter values", async() => {
+    const res = await request(app).post("/api/register").send({
+      email: "cedric@hogwarts.edu",
+      password: "diggory",
+      extraKey: "extra"
+    });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual("Bad Request");
+
+    const res2 = await request(app).post("/api/register").send({
+      email: "cedric@hogwarts.edu"
+    });
+
+    expect(res2.statusCode).toEqual(400);
+    expect(res2.body.message).toEqual("Bad Request");
+  });
 });

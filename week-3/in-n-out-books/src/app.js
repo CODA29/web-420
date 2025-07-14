@@ -1,17 +1,21 @@
 /*
   Author: Dagmawi Megra
-  Date: 07/05/2025
+  Date: 07/13/2025
   File Name: app.js
   Description: This is the main entry point for the in-n-out-books application.
 */
 
 //set up an Express application
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const app = express();
 const createError = require('http-errors');
 
 // Importing the books collection
 const books = require('../database/books');
+
+// Importing the users collection
+const users = require('../database/users');
 
 app.use(express.json()); // Middleware to parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded request bodies
@@ -96,6 +100,41 @@ app.get("/", async (req, res, next) => {
     </html>`;
 
   res.send(html);
+});
+
+// Route to log a user in
+app.post("/api/users/login", async (req, res, next) => {
+  try{
+    const user = req.body; // Extract email and password from the request body
+
+    const expectedKeys = ["email", "password"];
+    const receivedKeys = Object.keys(user);
+
+    // Check if the request body contains the expected keys
+    if(!receivedKeys.every(key => expectedKeys.includes(key)) || receivedKeys.length !== expectedKeys.length){
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      return next(createError(400, "Bad Request")); // If keys are missing or extra
+    }
+
+
+    // Find the user with the matching email
+    const newUser = await users.findOne({ email: user.email });
+    if (!newUser) {
+      return next(createError(404, "User not found")); // Returns a 404 error if user is not found
+    }
+
+    //Compare the provided password with the stored hashed password
+    const isPasswordValid = bcrypt.compareSync(user.password, newUser.password);
+    if (!isPasswordValid) {
+      return next(createError(401, "Unauthorized")); // Returns a 401 error if credentials are invalid
+    }
+
+    res.status(200).send({ message: "Authentication successful" }); // Sends a success response if authentication is successful
+    
+  }catch(err){
+    console.error("Error: ", err.message); // Logs the error message
+    next(err); // Passes the error to the next middleware
+  }
 });
 
 // Route to add a new book

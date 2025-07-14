@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 07/05/2025
+  Date: 07/13/2025
   File Name: app.js
   Description: This is the main entry point for the cookbook application.
 */
@@ -11,6 +11,9 @@ const createError = require('http-errors');
 
 // Importing the recipes module
 const recipes = require('../database/recipes');
+
+// Importing the users module
+const users = require('../database/users');
 
 const app = express(); // Creates an express application
 
@@ -68,6 +71,53 @@ app.get("/", async(req,res,next) => {
     </html> `; // end HTML content for the landing page
   res.send(html); // Send the HTML content to the client
 });
+
+// Route to register a new user
+app.post("/api/register", async(req,res,next) => {
+  console.log("Request body: ", req.body);
+  try{
+    const user = req.body;
+
+    const expectedKeys = ["email", "password"];
+    const receivedKeys = Object.keys(user);
+
+    // Check if the request body contains the expected keys
+    if(!receivedKeys.every(key => expectedKeys.includes(key)) || receivedKeys.length !== expectedKeys.length){
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      return next(createError(400, "Bad Request")); // If keys are missing or extra
+    }
+
+    let duplicateUser;
+    // Check if the user already exists
+    try{
+      duplicateUser = await users.findOne({email: user.email});
+    }catch(err){
+      duplicateUser = null; // If an error occurs, set duplicateUser to null
+    }
+
+    if(duplicateUser){
+      console.error("Conflict: User already exists");
+      return next(createError(409, "Conflict")); // If user exists, return 409
+    }
+
+    const hashedPassword = bcrypt.hashSync(user.password, 10);
+
+
+    const newUser = await users.insertOne({
+      email: user.email,
+      password: hashedPassword
+    });
+
+    res.status(200).send({ user: newUser, message: "Registration successful" });
+
+  }catch(err){
+    console.error("Error: ", err);
+    console.error("Error: ", err.message);
+    next(err); // Passes error to the next middleware
+  }
+});
+
+
 
 // Route to add a new recipe
 app.post("/api/recipes", async(req, res, next)=>{
