@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 07/13/2025
+  Date: 07/20/2025
   File Name: app.js
   Description: This is the main entry point for the in-n-out-books application.
 */
@@ -16,6 +16,34 @@ const books = require('../database/books');
 
 // Importing the users collection
 const users = require('../database/users');
+
+// Importing the ajv npm package
+const Ajv = require("ajv");
+
+// Create an instance of Ajv
+const ajv = new Ajv();
+
+// Schema for validating security questions
+const securityQuestionsSchema = {
+  "type": "object",
+  "properties": {
+    "securityQuestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "answer": { "type": "string" }
+        },
+        "required": ["answer"],
+        "additionalProperties": false
+      }
+    },
+    "newPassword": { "type": "string" }
+  },
+  "required": ["securityQuestions"],
+  "additionalProperties": false
+};
+
 
 app.use(express.json()); // Middleware to parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded request bodies
@@ -130,13 +158,50 @@ app.post("/api/users/login", async (req, res, next) => {
     }
 
     res.status(200).send({ message: "Authentication successful" }); // Sends a success response if authentication is successful
-    
+
   }catch(err){
     console.error("Error: ", err.message); // Logs the error message
     next(err); // Passes the error to the next middleware
   }
 });
 
+// Route to verify user's security questions
+app.post("/api/users/:email/verify-security-question", async (req, res, next) => {
+  try{
+    const { email } = req.params; // Extracts the email from the request parameters
+    const { securityQuestions } = req.body; // Extracts the security questions from the request body
+
+    const validate = ajv.compile(securityQuestionsSchema);
+    const valid = validate(req.body);
+
+    // Validate the request body against the security questions schema
+    if(!valid){
+      console.error("Bad Request: Invalid request body", validate.errors);
+      return next(createError(400, "Bad Request"));
+    }
+
+    const user = await users.findOne({email: email}); // Finds the user with the matching email
+
+    //check if the user supplied answers are a match with the stored security answers
+    if(securityQuestions[0].answer === user.securityQuestions[0].answer &&
+       securityQuestions[1].answer === user.securityQuestions[1].answer &&
+       securityQuestions[2].answer === user.securityQuestions[2].answer) {
+
+      // Sends a success response if answers are correct
+      res.status(200).send({ message: "Security questions successfully answered" });
+
+    }
+    else{
+      // Returns a 401 error if answers are incorrect
+      return next(createError(401, "Unauthorized"));
+    }
+
+
+  }catch(err){
+    console.error("Error: ", err.message); // Logs the error message
+    next(err); // Passes the error to the next middleware
+  }
+});
 // Route to add a new book
 app.post("/api/books", async(req, res, next) => {
   try{

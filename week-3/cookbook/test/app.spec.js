@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 07/13/2025
+  Date: 07/20/2025
   File Name: app.spec.js
   Description: This file contains tests for the cookbook API using Jest and Supertest.
 */
@@ -146,4 +146,49 @@ describe("Chapter 6: API Tests", () => {
     expect(res2.statusCode).toEqual(400);
     expect(res2.body.message).toEqual("Bad Request");
   });
+});
+
+// test suite for chapter 7 using Jest’s describe method
+describe("Chapter 7: API Tests", () => {
+  it("should return a 200 status code with a message of 'Password reset successful' when resetting a user's password", async () => {
+    const res = await request(app).post("/api/users/harry@hogwarts.edu/reset-password").send({
+      securityQuestions: [
+        {answer: "Hedwig"},
+        {answer: "Quidditch Through the Ages"},
+        {answer: "Evans"}
+      ],
+      newPassword: "password"
+    });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.message).toEqual("Password reset successful");
+  });
+
+  it("should return a 400 status code with a message of 'Bad Request' when the request body fails ajv validation", async() => {
+    const res = await request(app).post("/api/users/harry@hogwarts.edu/reset-password").send({
+      securityQuestions:[
+        {answer: "Hedwig", question: "What is your pet's name?"},
+        {answer: "Quidditch Through the Ages", myName: "Harry Potter"}
+      ],
+      newPassword: "password"
+    });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual("Bad Request");
+  });
+
+  it("should return 401 status code with a message of 'Unauthorized' when the security answers are incorrect", async() => {
+    const res = await request(app).post("/api/users/harry@hogwarts.edu/reset-password").send({
+      securityQuestions: [
+        {answer: "Fluffy"},
+        {answer: "Quidditch Through the Ages"},
+        {answer: "Evans"}
+      ],
+      newPassword: "password"
+    });
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body.message).toEqual("Unauthorized");
+  });
+
 });

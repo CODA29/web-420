@@ -1,6 +1,6 @@
 /*
   Author: Dagmawi Megra
-  Date: 07/13/2025
+  Date: 07/20/2025
   File Name: app.spec.js
   Description: This file contains tests for the In-N-Out Books API using Jest and Supertest.
 */
@@ -126,5 +126,46 @@ describe("Chapter 6: API Tests", () => {
 
     expect(res.statusCode).toEqual(400); // Check if the status code is 400
     expect(res.body.message).toEqual("Bad Request"); // Check if the error message is "Bad Request"
+  });
+});
+
+// test suite for chapter 7 using Jest’s describe method
+describe("Chapter 7: API Tests", () => {
+  it("should return a 200 status code with 'Security questions successfully answered'", async() => {
+    const res = await request(app).post('/api/users/hermione@hogwarts.edu/verify-security-question').send({
+      securityQuestions: [
+        {answer: "Crookshanks"},
+        {answer: "Hogwarts: A History" },
+        {answer: "Wilkins"}
+      ]
+    });
+
+    expect(res.statusCode).toEqual(200); // Check if the status code is 200
+    expect(res.body.message).toEqual("Security questions successfully answered");
+  });
+
+  it("should return a 400 status code with ‘Bad Request’ message when the request body fails ajv validation", async() => {
+    const res = await request(app).post('/api/users/hermione@hogwarts.edu/verify-security-question').send({
+      securityQuestions: [
+        {answer: "Crookshanks", question: "What is your pet's name?"},
+        {answer: "Hogwarts: A History", myName: "Jason Bourne"}
+      ]
+    });
+
+    expect(res.statusCode).toEqual(400); // Check if the status code is 400
+    expect(res.body.message).toEqual("Bad Request"); // Check if the error message is "Bad Request"
+  });
+
+  it("should return a 401 status code with 'Unauthorized' message when the security questions are incorrect", async() => {
+    const res = await request(app).post('/api/users/hermione@hogwarts.edu/verify-security-question').send({
+      securityQuestions: [
+        {answer: "Wrong Answer"},
+        {answer: "Hogwarts: A History" },
+        {answer: "Wilkins"}
+      ]
+    });
+
+    expect(res.statusCode).toEqual(401); // Check if the status code is 401
+    expect(res.body.message).toEqual("Unauthorized"); // Check if the error message is "Unauthorized"
   });
 });
